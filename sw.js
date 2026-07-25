@@ -1,6 +1,6 @@
 // Legt das Spiel beim ersten Aufruf in den Cache, damit es danach ohne Netz
 // startet – auch aus dem Icon am Home-Bildschirm.
-const CACHE = "wuerfelspiel-v2";
+const CACHE = "wuerfelspiel-v3";
 const FILES = ["./", "./index.html", "./icon-180.png"];
 
 self.addEventListener("install", e => {
