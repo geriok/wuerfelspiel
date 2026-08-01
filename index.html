@@ -298,6 +298,11 @@
     border-radius:16px;
     padding:clamp(24px,7vw,34px) clamp(20px,6vw,30px);
     text-align:center;
+    /* Bei sechs Spielern stehen hier fünf Tipp-Knöpfe – das muss erreichbar
+       bleiben, statt unten aus dem Bild zu laufen. */
+    max-height:100%;
+    overflow-y:auto;
+    overscroll-behavior:contain;
     box-shadow:0 24px 60px rgba(0,0,0,.5);
     animation:rise .26s cubic-bezier(.2,.9,.3,1);
   }
@@ -316,9 +321,18 @@
     display:block;margin-top:12px;
     color:var(--brass);font-style:italic;font-size:14px;
   }
+  .hcount{
+    display:block;margin-top:14px;
+    font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--clay);
+  }
   .oDice{display:flex;gap:6px;justify-content:center;margin-top:16px}
   .oDice .mini{background:rgba(226,102,76,.16);border-color:var(--clay);color:var(--clay)}
   .oBtns{display:grid;gap:9px;margin-top:22px}
+  /* Zwischenruf mit sechs Spielern: fünf Tipp-Knöpfe plus "Würfeln!" müssen
+     ohne Scrollen auf ein kleines Display passen. */
+  .oBtns.compact{gap:7px;margin-top:16px}
+  .oBtns.compact button{min-height:44px;padding:10px 14px;font-size:14px}
   .oIcon{font-size:clamp(44px,13vw,62px);line-height:1;margin-bottom:2px}
   .oIcon.pop{animation:pop .42s cubic-bezier(.2,1.5,.4,1)}
   @keyframes pop{
@@ -414,10 +428,10 @@
       <span class="track"><span class="knob"></span></span>
       <span class="what">
         ⚡ Extreme Mode
-        <em>Zwölf Items auf der Hand, und du entscheidest, wann sie fliegen und
-        wen sie treffen: klauen, halbieren, bomben, Taschen leeren, das Karussell
-        drehen – oder dich hinter Schild, Spiegel und Fallschirm verstecken.
-        Dazu ein Tisch, der jeden Fehlwurf kommentiert.</em>
+        <em>Wer weiterwürfelt, wird ausgelacht: die anderen tippen dagegen und
+        kassieren, wenn er verwürfelt – zahlen aber, wenn er liefert.
+        Dazu zwölf Items auf der Hand, die du selbst einsetzt: klauen, bomben,
+        Taschen leeren – oder dich hinter Schild und Spiegel verstecken.</em>
       </span>
     </label>
     <button id="startBtn">Spiel starten</button>
@@ -472,6 +486,13 @@
         <li><b>Sichern:</b> Die Punkte wandern fest aufs Konto. <b>Aber:</b> die Stufe wandert mit – der nächste Spieler darf dort weitermachen, wo gesichert wurde, und rechnet seine Punkte auf den Pot drauf. Er darf stattdessen auch neu bei Stufe 1 beginnen.</li>
         <li>Verwürfelt der Nachfolger den übernommenen Pot, ist alles weg. Die bereits gesicherten Punkte des Vorgängers bleiben erhalten.</li>
         <li>Sieg bei <b>10.000 Punkten</b>.</li>
+        <li><b>📣 Zwischenruf</b> (nur im Extreme Mode): Will jemand weiterwürfeln und es
+          liegen <b>mindestens 500 Punkte</b> bei <b>höchstens 3 Würfeln</b>, dürfen die
+          anderen dagegen tippen – jeder für sich, zwölf Sekunden lang.
+          <br><b>Verwürfelt er</b>, bekommt jeder Zwischenrufer ein Viertel des verbrannten
+          Pots (höchstens 500). <b>Schafft er es</b>, zahlt jeder Zwischenrufer 200 an ihn.
+          <br>Höchstens <b>ein Zwischenruf pro Zug</b> – auch ein übernommener Pot löst einen aus.
+        </li>
         <li><b>⚡ Extreme Mode</b> (im Setup zuschaltbar): Du sammelst Items und setzt sie
           selbst ein – gegen wen du willst.
           <br><b>Verdient</b> wird ein Item, wenn du eine Kombi ablegst (Belohnung), wenn du
@@ -533,6 +554,15 @@
 
   // Extreme Mode: Items werden verdient und selbst eingesetzt.
   const MAX_ITEMS = 3;
+
+  // Zwischenruf: die Mitspieler wetten gegen den, der weiterwürfelt.
+  // Nur wenn es auch spannend ist – sonst wird aus dem Gag eine Dauerabfrage.
+  const HECKLE_MIN_POT  = 500;   // so viel muss auf dem Tisch liegen
+  const HECKLE_MAX_DICE = 3;     // ab hier wird ein Fehlwurf wahrscheinlich
+  const HECKLE_SECONDS  = 12;    // so lange darf getuschelt werden
+  const HECKLE_SHARE    = .25;   // Anteil am verbrannten Pot für die Geier
+  const HECKLE_CAP      = 500;   // gedeckelt, damit ein Zug niemanden überrollt
+  const HECKLE_PENALTY  = 200;   // so viel kostet ein danebengetippter Zwischenruf
 
   function tally(vals){
     const c = {};
@@ -769,6 +799,15 @@
   /* ---------- Ansage ---------- */
   function announce(cfg){
     G.phase = "idle";
+
+    // Reste des vorigen Ereignisses wegräumen: eine stehengebliebene
+    // Einblendung deckt sonst Symbol und Titel zu, und der Emoji-Regen
+    // von vorhin fällt quer über den neuen Text.
+    const altToast = document.querySelector(".toast");
+    if(altToast) altToast.remove();
+    if(toastTimer) clearTimeout(toastTimer);
+    [...document.querySelectorAll(".fx")].forEach(l => l.remove());
+
     el.sheet.className = "sheet" + (cfg.tone ? " " + cfg.tone : "") +
                          (cfg.quake && !calm() ? " quake" : "");
     el.oIcon.hidden = !cfg.icon;
@@ -790,6 +829,7 @@
     });
 
     el.oBtns.innerHTML = "";
+    el.oBtns.className = cfg.compact ? "oBtns compact" : "oBtns";
     cfg.buttons.forEach(b => {
       const btn = document.createElement("button");
       btn.textContent = b.label;
@@ -834,7 +874,9 @@
       phase: "idle",
       tumble: null,
       extreme: el.extreme.checked,
-      itemUsed: false
+      itemUsed: false,
+      heckled: false,     // ein Zwischenruf pro Zug
+      bets: []            // wer gegen den aktiven Spieler getippt hat
     };
     el.setup.hidden = true;
     el.game.hidden = false;
@@ -851,6 +893,8 @@
   /* ---------- Zugablauf ---------- */
   function freshRoll(){
     G.itemUsed = false;
+    G.heckled = false;
+    G.bets = [];
     G.pot = null;
     G.turnPoints = 0;
     G.diceCount = 5;
@@ -861,13 +905,16 @@
 
   function takePotAndRoll(){
     G.itemUsed = false;
+    G.heckled = false;
+    G.bets = [];
     G.turnPoints = G.pot.points;
     G.diceCount = G.pot.dice;
     G.stage = 6 - G.pot.dice;
     G.setAside = [];
     log(cur().name + " übernimmt den Pot (" + G.turnPoints + " Punkte, " + G.diceCount + " Würfel).", "hot");
     G.pot = null;
-    roll();
+    // Ein übernommener Pot auf wenigen Würfeln ist der beste Moment für Spott.
+    maybeHeckle(roll);
   }
 
   function declinePotAndRoll(){
@@ -901,6 +948,23 @@
     if(hasScore(vals)){
       G.phase = "select";
       log(cur().name + " würfelt: " + vals.join(" "), "");
+
+      // Er hat es geschafft – wer dagegen getippt hat, zahlt.
+      const spott = resolveHeckle(false, 0);
+      if(spott){
+        const w = winnerIfAny();
+        announce({
+          tone: "good",
+          icon: "😎",
+          fx: "😎",
+          eyebrow: "Zwischenruf",
+          title: cur().name + " liefert",
+          text: "Der Wurf sitzt: <b>" + vals.join(" ") + "</b>.<br>" + spott,
+          buttons: [{label: w ? "Und der Sieger ist…" : "Weiter",
+                     fn: () => { if(w) winAnnounce(w); else backToTable(); }}]
+        });
+        return;
+      }
       render();
       return;
     }
@@ -923,6 +987,8 @@
       G.turnPoints = 0;
       log(p.name + " würfelt " + vals.join(" ") + " – Fehlwurf, aber der Fallschirm rettet " +
           lost + " Punkte → Gesamt " + p.score + ".", "good");
+      // Verwürfelt hat er trotzdem – der Spott zählt.
+      const spott = resolveHeckle(true, lost);
       const w = winnerIfAny();
       announce({
         tone: "good",
@@ -931,7 +997,7 @@
         eyebrow: "Weiche Landung",
         title: "Fallschirm gezogen!",
         text: esc(p.name) + " verwürfelt – und segelt mit " + num(lost) +
-              " Punkten sanft aufs Konto (" + num(p.score) + ").<br>" +
+              " Punkten sanft aufs Konto (" + num(p.score) + ")." + spott + "<br>" +
               "<b>" + esc(who.name) + " ist dran.</b>",
         dice: vals,
         buttons: [{label: w ? "Und der Sieger ist…" : who.name + " würfelt",
@@ -945,6 +1011,8 @@
         (lost > 0 ? lost + " Punkte verloren!" : "Nichts geholt."), "bad");
 
     const trost = grantItem(p, "verwürfelt", true);
+    const spott = resolveHeckle(true, lost);
+    const w = winnerIfAny();     // ein sitzender Zwischenruf kann jemanden ins Ziel bringen
     announce({
       tone: "bad",
       quake: G.extreme,          // im Normalmodus bleibt der Tisch ruhig
@@ -953,10 +1021,12 @@
       text: esc(p.name) + " hat weder 1er noch 5er noch eine Kombi – " +
             (lost > 0 ? '<span class="num">' + lost + "</span> Punkte futsch." : "nichts geholt.") +
             (trost ? "<br>Trostpreis: <b>" + ITEMS[trost].icon + " " + ITEMS[trost].name + "</b>" : "") +
+            spott +
             "<br><b>" + esc(who.name) + " ist dran.</b>" +
             quip("bust"),
       dice: vals,
-      buttons: [{label: who.name + " würfelt", fn: weiter}]
+      buttons: [{label: w ? "Und der Sieger ist…" : who.name + " würfelt",
+                 fn: () => { if(w) winAnnounce(w); else weiter(); }}]
     });
   }
 
@@ -1014,7 +1084,7 @@
       G.stage++;
       if(r.combo) grantItem(cur(), "Kombi gewürfelt");
     }
-    roll();
+    maybeHeckle(roll);
   }
 
   function bank(){
@@ -1333,6 +1403,114 @@
         else backToTable();
       }}]
     });
+  }
+
+  /* ---------- Zwischenruf ---------- */
+  // Das eigentliche Problem beim Reihum-Reichen: von drei Leuten ist immer nur
+  // einer beschäftigt. Hier dürfen die anderen gegen ihn tippen – dann schauen
+  // alle auf denselben Wurf, und das Gejohle entsteht am Tisch statt im Log.
+  function maybeHeckle(next){
+    if(!G.extreme || G.heckled || G.players.length < 2) return next();
+    if(G.diceCount > HECKLE_MAX_DICE || G.turnPoints < HECKLE_MIN_POT) return next();
+    G.heckled = true;
+    askHeckle(next);
+  }
+
+  function askHeckle(next){
+    const p = cur();
+    const others = G.players.filter(x => x !== p);
+    const bets = [];
+    const risk = G.turnPoints;
+    let done = false;
+
+    announce({
+      icon: "📣",
+      eyebrow: "Zwischenruf",
+      compact: true,
+      title: p.name + " will weiter",
+      text: num(risk) + " Punkte auf dem Tisch, nur noch <b>" +
+            G.diceCount + (G.diceCount === 1 ? " Würfel</b>." : " Würfel</b>.") +
+            "<br><b>Wer glaubt nicht dran?</b>" +
+            '<span class="quip">Richtig getippt: ihr kassiert. Daneben: je ' +
+            HECKLE_PENALTY + " an ihn.</span>" +
+            '<span class="hcount" id="hcount"></span>',
+      buttons: []
+    });
+
+    others.forEach(o => {
+      const b = document.createElement("button");
+      const paint = () => {
+        const on = bets.indexOf(o) !== -1;
+        b.className = on ? "warn" : "ghost";
+        b.textContent = on ? "✓ " + o.name + ": der verwürfelt!" : o.name + " tippt dagegen";
+      };
+      onTap(b, () => {
+        if(done) return;
+        const i = bets.indexOf(o);
+        if(i === -1) bets.push(o); else bets.splice(i, 1);
+        paint();
+      });
+      paint();
+      el.oBtns.appendChild(b);
+    });
+
+    const go = document.createElement("button");
+    go.textContent = "Würfeln!";
+    onTap(go, () => finish());
+    el.oBtns.appendChild(go);
+
+    // Die Uhr läuft, damit niemand ewig überlegt – abbrechen kann man jederzeit
+    // über "Würfeln!". Läuft sie ab, gilt was gerade angetippt ist.
+    let left = HECKLE_SECONDS;
+    const tick = () => {
+      const c = document.getElementById("hcount");
+      if(c) c.textContent = left > 0 ? left + " Sekunden" : "los!";
+      if(left <= 0){ finish(); return; }
+      left--;
+    };
+    const iv = setInterval(tick, 1000);
+    tick();
+
+    function finish(){
+      if(done) return;
+      done = true;
+      clearInterval(iv);
+      G.bets = bets.slice();
+      if(bets.length){
+        log("📣 Zwischenruf gegen " + p.name + ": " + bets.map(x => x.name).join(", "), "hot");
+        burst(["📣"], 6);
+      }
+      el.overlay.hidden = true;
+      next();
+    }
+  }
+
+  // Liefert fertiges HTML für die Ansage – oder "", wenn niemand getippt hat.
+  function resolveHeckle(busted, pot){
+    const bets = G.bets || [];
+    G.bets = [];
+    if(!bets.length) return "";
+    const p = cur();
+
+    if(busted){
+      const win = Math.max(50, Math.min(HECKLE_CAP, Math.floor(pot * HECKLE_SHARE / 50) * 50));
+      bets.forEach(b => { b.score += win; });
+      log("📣 Zwischenruf sitzt: " + bets.map(b => b.name).join(", ") + " je +" + win + ".", "good");
+      return "<br><b>Der Spott sitzt:</b> " +
+             bets.map(b => esc(b.name) + " " + num("+" + win)).join(" · ");
+    }
+
+    const zeilen = [];
+    bets.forEach(b => {
+      const zahlt = Math.min(HECKLE_PENALTY, b.score);
+      b.score -= zahlt;
+      p.score += zahlt;
+      zeilen.push(esc(b.name) + " " + num("−" + zahlt));
+    });
+    log("📣 Zwischenruf daneben: " + bets.map(b => b.name).join(", ") +
+        " zahlen an " + p.name + ".", "bad");
+    return "<b>Danebengetippt!</b> " + zeilen.join(" · ") +
+           "<br>Kassiert hat <b>" + esc(p.name) + "</b> (" + num(p.score) + ").";
   }
 
   /* ---------- Spielende ---------- */
