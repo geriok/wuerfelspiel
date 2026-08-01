@@ -224,21 +224,10 @@
   .combo.best{background:rgba(87,211,163,.12);border-color:var(--mint);color:var(--mint)}
   .combo.best.on{background:var(--mint);color:#052e21}
 
-  /* Items auf der Hand */
-  .hand{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
-  .hand:empty{display:none}
-  .item{
-    min-height:0;padding:9px 13px;border-radius:10px;
-    background:rgba(226,102,76,.13);border:1px solid var(--clay);color:var(--clay);
-    font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;
-  }
-  .item .ic{font-size:15px;line-height:1}
-  .item.spent{opacity:.4}
   .inv{
     float:right;font-size:9px;font-weight:800;letter-spacing:.02em;
-    color:var(--clay);
+    color:var(--brass);
   }
-
   .aside{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:32px;margin-top:14px}
   .aside:empty{min-height:0;margin-top:0}
   .mini{
@@ -357,7 +346,7 @@
     to{transform:translateY(122vh) rotate(420deg);opacity:.15}
   }
 
-  /* Kurze Einblendung, wenn ein Item auf die Hand wandert */
+  /* Kurze Einblendung für Nebenbei-Ereignisse */
   .toast{
     position:fixed;left:50%;top:calc(14px + var(--sat));z-index:70;
     transform:translateX(-50%);
@@ -371,24 +360,6 @@
   @keyframes toastin{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
   @keyframes toastout{from{opacity:1}to{opacity:0;transform:translate(-50%,-10px)}}
 
-  /* Schutz-Marken auf der Hand */
-  .item.guard{
-    background:rgba(87,211,163,.12);border-color:var(--mint);color:var(--mint);
-    cursor:default;
-  }
-
-  .nojs{
-    max-width:520px;margin:calc(16px + var(--sat)) auto 0;
-    background:var(--clay);color:#2b0d06;
-    border-radius:var(--r);padding:14px 16px;
-    font-size:14px;line-height:1.55;
-  }
-  .errbar{
-    position:fixed;top:0;left:0;right:0;z-index:99;
-    background:var(--clay);color:#2b0d06;
-    font-size:13px;font-weight:700;line-height:1.4;
-    padding:calc(10px + var(--sat)) 14px 10px;
-  }
   [hidden]{display:none !important}
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
@@ -428,10 +399,10 @@
       <span class="track"><span class="knob"></span></span>
       <span class="what">
         ⚡ Extreme Mode
-        <em>Wer weiterwürfelt, wird ausgelacht: die anderen tippen dagegen und
-        kassieren, wenn er verwürfelt – zahlen aber, wenn er liefert.
-        Dazu zwölf Items auf der Hand, die du selbst einsetzt: klauen, bomben,
-        Taschen leeren – oder dich hinter Schild und Spiegel verstecken.</em>
+        <em>Wer weiterwürfelt, eröffnet eine Wette: die anderen setzen dagegen,
+        zur Quote nach Würfelzahl – gegen fünf Würfel steht ×10. Er darf
+        zurückbieten und verdoppeln. Wer dreimal hintereinander liefert, ist
+        heiß und kassiert doppelt.</em>
       </span>
     </label>
     <button id="startBtn">Spiel starten</button>
@@ -449,7 +420,6 @@
 
     <div class="dicearea" id="dice"></div>
     <div class="combos" id="combos"></div>
-    <div class="hand" id="hand"></div>
     <div class="aside" id="aside"></div>
     <div class="msg" id="msg"></div>
   </div>
@@ -486,36 +456,27 @@
         <li><b>Sichern:</b> Die Punkte wandern fest aufs Konto. <b>Aber:</b> die Stufe wandert mit – der nächste Spieler darf dort weitermachen, wo gesichert wurde, und rechnet seine Punkte auf den Pot drauf. Er darf stattdessen auch neu bei Stufe 1 beginnen.</li>
         <li>Verwürfelt der Nachfolger den übernommenen Pot, ist alles weg. Die bereits gesicherten Punkte des Vorgängers bleiben erhalten.</li>
         <li>Sieg bei <b>10.000 Punkten</b>.</li>
-        <li><b>📣 Zwischenruf</b> (nur im Extreme Mode): Will jemand weiterwürfeln und es
-          liegen <b>mindestens 500 Punkte</b> bei <b>höchstens 3 Würfeln</b>, dürfen die
-          anderen dagegen tippen – jeder für sich, zwölf Sekunden lang.
-          <br><b>Verwürfelt er</b>, bekommt jeder Zwischenrufer ein Viertel des verbrannten
-          Pots (höchstens 500). <b>Schafft er es</b>, zahlt jeder Zwischenrufer 200 an ihn.
-          <br>Höchstens <b>ein Zwischenruf pro Zug</b> – auch ein übernommener Pot löst einen aus.
-        </li>
-        <li><b>⚡ Extreme Mode</b> (im Setup zuschaltbar): Du sammelst Items und setzt sie
-          selbst ein – gegen wen du willst.
-          <br><b>Verdient</b> wird ein Item, wenn du eine Kombi ablegst (Belohnung), wenn du
-          alle fünf Würfel verbrauchst (Zugabe) und wenn du verwürfelst (Trostpreis).
-          Mehr als <b>drei</b> passen nicht auf die Hand.
-          <br><b>Gespielt</b> wird höchstens <b>ein Item pro Zug</b>, während du Würfel aussuchst.
-          Was jeder hält, steht in der Punkteleiste – niemand kann heimlich zuschlagen.
-          Seltene Items fallen seltener.
+        <li><b>⚡ Extreme Mode</b> (im Setup zuschaltbar): Aus dem Weiterwürfeln wird
+          eine Wette. Will jemand weiterwürfeln und liegen <b>mindestens 300 Punkte</b>
+          im Pot, dürfen die anderen zwölf Sekunden lang dagegen setzen – jeder für
+          sich, Einsatz <b>100, 300 oder 600</b> (mehrfach tippen schaltet weiter).
+          Gesetzt wird nur, was gedeckt ist – jeder startet dafür mit <b>500 Jetons</b>
+          auf dem Konto. Wer unter 100 fällt, ist <b>pleite</b> und muss erst wieder
+          würfeln.
+          <br>Die <b>Quote</b> hängt daran, wie dünn das Eis ist – sie entspricht ungefähr
+          dem echten Fehlwurf-Risiko:
           <table class="combotab">
-            <tr><th>✕2 Doppelt</th><td>verdoppelt deine bereits abgelegten Punkte im Zug</td></tr>
-            <tr><th>✋ Klau</th><td>nimmt 500 Punkte von einem Mitspieler</td></tr>
-            <tr><th>🥃 Zielwasser</th><td>wirft alle Würfel auf dem Tisch neu – Fehlwurf bleibt Fehlwurf</td></tr>
-            <tr><th>🛡 Schild</th><td>blockt das nächste Item, das gegen dich gespielt wird</td></tr>
-            <tr><th>½ Aderlass</th><td>halbiert den Gesamtstand eines Mitspielers</td></tr>
-            <tr><th>⛔ Blockade</th><td>der Getroffene darf den Pot im nächsten Zug nicht übernehmen</td></tr>
-            <tr><th>🕵 Taschendieb</th><td>zieht einem Mitspieler ein zufälliges Item aus der Hand</td></tr>
-            <tr><th>🪂 Fallschirm</th><td>beim nächsten Fehlwurf werden deine Zugpunkte gesichert statt verloren</td></tr>
-            <tr><th>⇄ Tausch</th><td>tauscht deinen Gesamtstand mit einem Mitspieler</td></tr>
-            <tr><th>🪞 Spiegel</th><td>wirft das nächste Item gegen dich auf den Absender zurück</td></tr>
-            <tr><th>💣 Bombe</th><td>alle anderen verlieren 250 Punkte (Schild schützt)</td></tr>
-            <tr><th>🎠 Karussell</th><td>alle Punktestände rücken einen Platz weiter – nichts schützt davor</td></tr>
+            <tr><th>Würfel</th><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td></tr>
+            <tr><th>Fehlwurf-Risiko</th><td>8 %</td><td>16 %</td><td>28 %</td><td>44 %</td><td>67 %</td></tr>
+            <tr><th>Quote</th><td>×10</td><td>×5</td><td>×2,5</td><td>×1,5</td><td>×0,5</td></tr>
           </table>
-          <b>Spiegel geht vor Schild.</b> Wer geschützt ist, zeigt das offen in der Punkteleiste.
+          <b>Verwürfelt er</b>, bekommt jeder Wettende Einsatz × Quote. <b>Schafft er es</b>,
+          wandern alle Einsätze zu ihm.
+          <br>Steht die Wette, darf er <b>zurückbieten</b>: Erhöhen verdoppelt beide Seiten.
+          <br><b>Heißer Lauf:</b> Wer <b>dreimal hintereinander</b> eine Wette übersteht,
+          kassiert doppelt. Ein Fehlwurf setzt die Serie zurück. Der Stand steht in der
+          Punkteleiste – man sieht also, wen man besser in Ruhe lässt.
+          <br>Höchstens <b>eine Wette pro Zug</b>; auch ein übernommener Pot löst eine aus.
         </li>
       </ul>
     </details>
@@ -552,17 +513,12 @@
   const STRAIGHT_PTS  = 1500;
   const FULLHOUSE_PTS = 1000;
 
-  // Extreme Mode: Items werden verdient und selbst eingesetzt.
-  const MAX_ITEMS = 3;
-
-  // Zwischenruf: die Mitspieler wetten gegen den, der weiterwürfelt.
-  // Nur wenn es auch spannend ist – sonst wird aus dem Gag eine Dauerabfrage.
-  const HECKLE_MIN_POT  = 500;   // so viel muss auf dem Tisch liegen
-  const HECKLE_MAX_DICE = 3;     // ab hier wird ein Fehlwurf wahrscheinlich
-  const HECKLE_SECONDS  = 12;    // so lange darf getuschelt werden
-  const HECKLE_SHARE    = .25;   // Anteil am verbrannten Pot für die Geier
-  const HECKLE_CAP      = 500;   // gedeckelt, damit ein Zug niemanden überrollt
-  const HECKLE_PENALTY  = 200;   // so viel kostet ein danebengetippter Zwischenruf
+  // Extreme Mode: die Mitspieler wetten gegen den, der weiterwürfelt.
+  // Ein Angebot pro Zug – sonst wird aus dem Nervenkitzel eine Dauerabfrage.
+  const START_JETONS   = 500;   // Wettkasse zum Start – ohne Deckung keine Wette
+  const HECKLE_MIN_POT = 300;    // so viel muss im Pot liegen, damit es lohnt
+  const HECKLE_SECONDS = 12;     // so lange darf getuschelt werden
+  const HECKLE_SERIE   = 3;      // ab so vielen überstandenen Wetten: heißer Lauf
 
   function tally(vals){
     const c = {};
@@ -669,7 +625,7 @@
     pcount:$("pcount"), nameFields:$("nameFields"), startBtn:$("startBtn"),
     extreme:$("extreme"),
     scores:$("scores"), eyebrow:$("eyebrow"), pot:$("pot"),
-    dice:$("dice"), combos:$("combos"), hand:$("hand"),
+    dice:$("dice"), combos:$("combos"),
     aside:$("aside"), msg:$("msg"), log:$("log"),
     rollBtn:$("rollBtn"), contBtn:$("contBtn"), bankBtn:$("bankBtn"),
     overlay:$("overlay"), sheet:$("sheet"),
@@ -860,10 +816,7 @@
     const names = [...el.nameFields.querySelectorAll("input")]
       .map((inp,i) => inp.value.trim() || ("Spieler " + (i+1)));
     G = {
-      players: names.map(n => ({
-        name:n, score:0, items:[],
-        shield:false, mirror:false, chute:false, blocked:false
-      })),
+      players: names.map(n => ({name:n, score:el.extreme.checked ? START_JETONS : 0, serie:0})),
       current: 0,
       pot: null,          // {points, dice, from}
       turnPoints: 0,      // in diesem Zug gesammelt (inkl. übernommenem Pot)
@@ -874,7 +827,6 @@
       phase: "idle",
       tumble: null,
       extreme: el.extreme.checked,
-      itemUsed: false,
       heckled: false,     // ein Zwischenruf pro Zug
       bets: []            // wer gegen den aktiven Spieler getippt hat
     };
@@ -892,7 +844,6 @@
 
   /* ---------- Zugablauf ---------- */
   function freshRoll(){
-    G.itemUsed = false;
     G.heckled = false;
     G.bets = [];
     G.pot = null;
@@ -904,7 +855,6 @@
   }
 
   function takePotAndRoll(){
-    G.itemUsed = false;
     G.heckled = false;
     G.bets = [];
     G.turnPoints = G.pot.points;
@@ -950,14 +900,14 @@
       log(cur().name + " würfelt: " + vals.join(" "), "");
 
       // Er hat es geschafft – wer dagegen getippt hat, zahlt.
-      const spott = resolveHeckle(false, 0);
+      const spott = resolveHeckle(false);
       if(spott){
         const w = winnerIfAny();
         announce({
           tone: "good",
           icon: "😎",
           fx: "😎",
-          eyebrow: "Zwischenruf",
+          eyebrow: "Wette gehalten",
           title: cur().name + " liefert",
           text: "Der Wurf sitzt: <b>" + vals.join(" ") + "</b>.<br>" + spott,
           buttons: [{label: w ? "Und der Sieger ist…" : "Weiter",
@@ -980,39 +930,13 @@
     G.dice = [];
     setMsg("");
 
-    // Fallschirm: rettet nur, wenn es auch etwas zu retten gibt.
-    if(G.extreme && p.chute && lost > 0){
-      p.chute = false;
-      p.score += lost;
-      G.turnPoints = 0;
-      log(p.name + " würfelt " + vals.join(" ") + " – Fehlwurf, aber der Fallschirm rettet " +
-          lost + " Punkte → Gesamt " + p.score + ".", "good");
-      // Verwürfelt hat er trotzdem – der Spott zählt.
-      const spott = resolveHeckle(true, lost);
-      const w = winnerIfAny();
-      announce({
-        tone: "good",
-        icon: "🪂",
-        fx: "🪂",
-        eyebrow: "Weiche Landung",
-        title: "Fallschirm gezogen!",
-        text: esc(p.name) + " verwürfelt – und segelt mit " + num(lost) +
-              " Punkten sanft aufs Konto (" + num(p.score) + ")." + spott + "<br>" +
-              "<b>" + esc(who.name) + " ist dran.</b>",
-        dice: vals,
-        buttons: [{label: w ? "Und der Sieger ist…" : who.name + " würfelt",
-                   fn: () => { if(w) winAnnounce(w); else weiter(); }}]
-      });
-      return;
-    }
-
     G.turnPoints = 0;
+    p.serie = 0;                 // ein Fehlwurf beendet den Lauf, ob jemand mitgesetzt hat oder nicht
     log(p.name + " würfelt " + vals.join(" ") + " – nichts Zählbares dabei. " +
         (lost > 0 ? lost + " Punkte verloren!" : "Nichts geholt."), "bad");
 
-    const trost = grantItem(p, "verwürfelt", true);
-    const spott = resolveHeckle(true, lost);
-    const w = winnerIfAny();     // ein sitzender Zwischenruf kann jemanden ins Ziel bringen
+    const spott = resolveHeckle(true);
+    const w = winnerIfAny();     // eine gewonnene Wette kann jemanden ins Ziel bringen
     announce({
       tone: "bad",
       quake: G.extreme,          // im Normalmodus bleibt der Tisch ruhig
@@ -1020,7 +944,6 @@
       title: G.extreme ? pickOne(QUIPS.bustTitle) : "Das war wohl nix!",
       text: esc(p.name) + " hat weder 1er noch 5er noch eine Kombi – " +
             (lost > 0 ? '<span class="num">' + lost + "</span> Punkte futsch." : "nichts geholt.") +
-            (trost ? "<br>Trostpreis: <b>" + ITEMS[trost].icon + " " + ITEMS[trost].name + "</b>" : "") +
             spott +
             "<br><b>" + esc(who.name) + " ist dran.</b>" +
             quip("bust"),
@@ -1072,17 +995,12 @@
       G.setAside = [];
       G.stage = 1;
       log(cur().name + " hat alle 5 Würfel verbraucht – 5 neue Würfel, " + G.turnPoints + " Punkte bleiben!", "hot");
-      // Alle fünf verbraucht ist die stärkere Leistung – dafür gibt es das Item.
-      // Spruch und Fund stehen zusammen in einer Einblendung.
-      const got = grantItem(cur(), "alle fünf verbraucht", true);
       if(G.extreme){
         burst(["🔥"], 10);
-        toast("🔥 " + pickOne(QUIPS.hot) +
-              (got ? "<br>" + ITEMS[got].icon + " <b>" + ITEMS[got].name + "</b> dazu" : ""));
+        toast("🔥 " + pickOne(QUIPS.hot));
       }
     } else {
       G.stage++;
-      if(r.combo) grantItem(cur(), "Kombi gewürfelt");
     }
     maybeHeckle(roll);
   }
@@ -1100,354 +1018,84 @@
     G.turnPoints = 0;
     setMsg("");
 
-    if(r.hot) grantItem(p, "alle fünf verbraucht");
-    else if(r.combo) grantItem(p, "Kombi gewürfelt");
     handover(p, banked, r.remaining);
   }
 
-  /* ---------- Extreme Mode: Items ---------- */
+  /* ---------- Wetten ---------- */
   const num = n => '<span class="num">' + n + "</span>";
 
-  // Items gehören einem Spieler und werden von ihm eingesetzt – wann und auf
-  // wen, entscheidet er selbst. Genau darin liegt der Reiz; blinder Zufall
-  // ohne Entscheidung war der Fehler der ersten Fassung.
-  // rarity = Lose im Beutel: 3 fällt oft, 1 ist der große Auftritt.
-  const ITEMS = {
-    doppelt: {
-      name:"Doppelt", icon:"✕2", tone:"good", rarity:3, fx:"✨",
-      desc:"Verdoppelt die Punkte, die du in diesem Zug schon liegen hast.",
-      needs:() => G.turnPoints > 0,
-      why:"Du hast in diesem Zug noch nichts abgelegt – erst weiterwürfeln.",
-      apply:p => {
-        const before = G.turnPoints;
-        G.turnPoints = before * 2;
-        log("⚡ " + p.name + " verdoppelt die Zugpunkte: " + before + " → " + G.turnPoints + ".", "hot");
-        return "Zugpunkte von <b>" + esc(p.name) + "</b>:<br>" + num(before) + " → " + num(G.turnPoints);
-      }
-    },
-    klau: {
-      name:"Klau", icon:"✋", tone:"bad", target:true, rarity:3, fx:"💰",
-      desc:"Nimm 500 Punkte von einem Mitspieler.",
-      apply:(p,t) => {
-        const amount = Math.min(500, t.score);
-        t.score -= amount;
-        p.score += amount;
-        log("⚡ " + p.name + " klaut " + amount + " von " + t.name + ".", "hot");
-        return "<b>" + esc(p.name) + "</b> nimmt " + num(amount) + " von <b>" + esc(t.name) + "</b>.<br>" +
-               esc(p.name) + " " + num(p.score) + " · " + esc(t.name) + " " + num(t.score);
-      }
-    },
-    aderlass: {
-      name:"Aderlass", icon:"½", tone:"bad", target:true, rarity:2, fx:"🩸",
-      desc:"Ein Mitspieler verliert die Hälfte seines Gesamtstands.",
-      apply:(p,t) => {
-        const before = t.score;
-        t.score = Math.floor(before / 2);
-        log("⚡ " + p.name + " halbiert " + t.name + ": " + before + " → " + t.score + ".", "hot");
-        return "<b>" + esc(t.name) + "</b>:<br>" + num(before) + " → " + num(t.score);
-      }
-    },
-    tausch: {
-      name:"Tausch", icon:"⇄", tone:"good", target:true, rarity:1, fx:"🔁",
-      desc:"Tausche deinen Gesamtstand mit einem Mitspieler.",
-      apply:(p,t) => {
-        const mine = p.score, theirs = t.score;
-        p.score = theirs;
-        t.score = mine;
-        log("⚡ " + p.name + " (" + mine + ") tauscht mit " + t.name + " (" + theirs + ").", "hot");
-        return esc(p.name) + " " + num(mine) + " → " + num(theirs) + "<br>" +
-               esc(t.name) + " " + num(theirs) + " → " + num(mine);
-      }
-    },
-    schild: {
-      name:"Schild", icon:"🛡", tone:"good", rarity:3, fx:"🛡",
-      desc:"Blockt das nächste Item, das gegen dich gespielt wird.",
-      apply:p => {
-        p.shield = true;
-        log("⚡ " + p.name + " geht hinter ein Schild.", "hot");
-        return "<b>" + esc(p.name) + "</b> ist geschützt.<br>Das nächste Item gegen dich verpufft.";
-      }
-    },
-    blockade: {
-      name:"Blockade", icon:"⛔", tone:"bad", target:true, rarity:2, fx:"⛔",
-      desc:"Der Gewählte darf in seinem nächsten Zug den Pot nicht übernehmen.",
-      apply:(p,t) => {
-        t.blocked = true;
-        log("⚡ " + p.name + " blockiert " + t.name + ".", "hot");
-        return "<b>" + esc(t.name) + "</b> muss im nächsten Zug bei Stufe 1 neu beginnen –<br>" +
-               "der Pot ist für ihn gesperrt.";
-      }
-    },
-
-    // Kippt man sich selbst ein: der Wurf fliegt noch einmal. Was schon
-    // beiseite liegt, bleibt liegen – der neue Wurf kann aber genauso platzen.
-    zielwasser: {
-      name:"Zielwasser", icon:"🥃", tone:"good", rarity:3, fx:"🥃",
-      desc:"Alle Würfel auf dem Tisch fliegen noch einmal. Beiseitegelegtes bleibt liegen. " +
-           "Vorsicht: Ist im neuen Wurf nichts drin, ist der Zug trotzdem futsch.",
-      needs:() => G.dice.length > 0,
-      why:"Es liegen gerade keine Würfel auf dem Tisch.",
-      apply:p => {
-        log("⚡ " + p.name + " kippt Zielwasser – " + G.dice.length + " Würfel fliegen neu.", "hot");
-        return "<b>" + esc(p.name) + "</b> wirft " + num(G.dice.length) + " Würfel noch einmal.<br>" +
-               "Auf gut Glück – und auf eigenes Risiko.";
-      },
-      then:() => { G.diceCount = G.dice.length; roll(); }
-    },
-
-    taschendieb: {
-      name:"Taschendieb", icon:"🕵", tone:"bad", target:true, rarity:2, fx:"🧤",
-      desc:"Greif einem Mitspieler in die Tasche und zieh ein zufälliges Item heraus.",
-      apply:(p,t) => {
-        if(!t.items.length){
-          log("⚡ " + p.name + " durchsucht " + t.name + " – nichts als Fusseln.", "");
-          return "<b>" + esc(t.name) + "</b> hat nichts auf der Hand.<br>" +
-                 "Ausbeute: zwei Fusseln und ein Bonbonpapier.";
-        }
-        const k = pickOne(t.items);
-        t.items.splice(t.items.indexOf(k), 1);
-        const platz = p.items.length < MAX_ITEMS;
-        if(platz) p.items.push(k);
-        log("⚡ " + p.name + " stiehlt " + ITEMS[k].name + " von " + t.name +
-            (platz ? "." : " – und lässt es fallen, die Hand ist voll."), "hot");
-        return "<b>" + esc(p.name) + "</b> zieht <b>" + ITEMS[k].icon + " " + ITEMS[k].name +
-               "</b> aus der Tasche von <b>" + esc(t.name) + "</b>." +
-               (platz ? "" : "<br>Die Hand ist voll – die Beute fällt zu Boden.");
-      }
-    },
-
-    fallschirm: {
-      name:"Fallschirm", icon:"🪂", tone:"good", rarity:2, fx:"🪂",
-      desc:"Beim nächsten Fehlwurf sind deine Zugpunkte nicht verloren – sie werden gesichert.",
-      apply:p => {
-        p.chute = true;
-        log("⚡ " + p.name + " schnallt einen Fallschirm um.", "hot");
-        return "<b>" + esc(p.name) + "</b> ist gesichert.<br>" +
-               "Der nächste Fehlwurf endet als weiche Landung.";
-      }
-    },
-
-    spiegel: {
-      name:"Spiegel", icon:"🪞", tone:"good", rarity:1, fx:"🪞",
-      desc:"Das nächste Item gegen dich prallt ab und trifft stattdessen den Absender.",
-      apply:p => {
-        p.mirror = true;
-        log("⚡ " + p.name + " stellt einen Spiegel auf.", "hot");
-        return "<b>" + esc(p.name) + "</b> spiegelt.<br>" +
-               "Wer jetzt zuschlägt, trifft sich selbst.";
-      }
-    },
-
-    bombe: {
-      name:"Bombe", icon:"💣", tone:"bad", rarity:1, fx:"💥", fxCount:22,
-      desc:"Zündet mitten auf dem Tisch: Alle anderen verlieren 250 Punkte. Schilde halten.",
-      apply:p => {
-        const zeilen = [];
-        G.players.forEach(x => {
-          if(x === p) return;
-          if(x.shield){
-            x.shield = false;
-            zeilen.push(esc(x.name) + " 🛡 " + num(x.score));
-            return;
-          }
-          x.score = Math.max(0, x.score - 250);
-          zeilen.push(esc(x.name) + " " + num(x.score));
-        });
-        log("⚡ " + p.name + " zündet eine Bombe – alle anderen verlieren 250.", "hot");
-        return "Es scheppert gewaltig.<br>" + zeilen.join(" · ");
-      }
-    },
-
-    // Reine Anarchie: jeder erbt den Stand seines Vorgängers am Tisch.
-    karussell: {
-      name:"Karussell", icon:"🎠", tone:"good", rarity:1, fx:"🎠", fxCount:20,
-      desc:"Alle Punktestände rücken einen Platz weiter. Wer führt, sollte sich festhalten. " +
-           "Dagegen schützt nichts.",
-      apply:p => {
-        const vorher = G.players.map(x => x.score);
-        G.players.forEach((x,i) => {
-          x.score = vorher[(i - 1 + vorher.length) % vorher.length];
-        });
-        log("⚡ " + p.name + " dreht das Karussell: " +
-            G.players.map(x => x.name + " " + x.score).join(", "), "hot");
-        return "Alle einen Platz weiterrücken!<br>" +
-               G.players.map(x => esc(x.name) + " " + num(x.score)).join(" · ");
-      }
-    }
-  };
-
-  // Beutel aus Losen: häufige Items liegen mehrfach drin, die großen Auftritte
-  // nur einmal. Einmal gebaut, danach nur noch gezogen.
-  const ITEM_BAG = (() => {
-    const bag = [];
-    Object.keys(ITEMS).forEach(k => {
-      const n = ITEMS[k].rarity || 2;
-      for(let i = 0; i < n; i++) bag.push(k);
-    });
-    return bag;
-  })();
-
-  // Verdient wird bei einer Kombi (Belohnung), bei allen fünf Würfeln (Zugabe)
-  // und beim Verwürfeln (Trostpreis) – beide Seiten des Glücks werfen etwas ab.
-  // quiet: die Ansage sagt es gleich selbst, dann braucht es keine Einblendung.
-  function grantItem(p, grund, quiet){
-    if(!G.extreme) return null;
-    if(p.items.length >= MAX_ITEMS){
-      log("⚡ " + p.name + " hätte ein Item bekommen (" + grund + "), aber die Hand ist voll.", "");
-      if(!quiet) toast("✋ Hand voll – " + esc(p.name) + " geht leer aus");
-      return null;
-    }
-    const kind = pickOne(ITEM_BAG);
-    const it = ITEMS[kind];
-    p.items.push(kind);
-    log("⚡ " + p.name + " erhält " + it.name + " (" + grund + ").", "hot");
-    if(!quiet){
-      toast(it.icon + " " + esc(p.name) + " bekommt <b>" + it.name + "</b>");
-      burst([it.icon], 6);
-    }
-    return kind;
-  }
-
-  function itemBlockedReason(kind){
-    const it = ITEMS[kind];
-    if(G.itemUsed) return "In diesem Zug ist schon ein Item gespielt.";
-    if(it.needs && !it.needs()) return it.why;
-    return null;
-  }
-
-  function tapItem(kind){
-    if(G.phase !== "select") return;
-    const grund = itemBlockedReason(kind);
-    if(grund){ setMsg('<span class="warn">' + grund + "</span>"); return; }
-    const it = ITEMS[kind];
-    if(it.target) askTarget(kind); else confirmItem(kind);
-  }
-
-  // Wer sich wehren kann, trägt das offen – heimliche Konter gibt es nicht.
-  const guardMarks = p => (p.mirror ? " 🪞" : "") + (p.shield ? " 🛡" : "") + (p.chute ? " 🪂" : "");
-
-  function askTarget(kind){
-    const it = ITEMS[kind];
-    const others = G.players.filter(x => x !== cur());
-    announce({
-      icon: it.icon,
-      eyebrow: "Item einsetzen",
-      title: it.name,
-      text: it.desc + "<br><b>Auf wen?</b>",
-      buttons: others.map(t => ({
-        label: t.name + " · " + t.score + guardMarks(t),
-        cls: "ghost",
-        fn: () => playItem(kind, t)
-      })).concat([{label:"Abbrechen", cls:"ghost", fn: backToTable}])
-    });
-  }
-
-  function confirmItem(kind){
-    const it = ITEMS[kind];
-    announce({
-      icon: it.icon,
-      eyebrow: "Item einsetzen",
-      title: it.name,
-      text: it.desc,
-      buttons: [
-        {label:"Einsetzen", fn: () => playItem(kind, null)},
-        {label:"Abbrechen", cls:"ghost", fn: backToTable}
-      ]
-    });
-  }
-
+  // Zurück an den Tisch, nachdem eine Ansage den Zug unterbrochen hat.
   function backToTable(){
     G.phase = "select";
     setMsg("");
     render();
   }
 
-  function playItem(kind, t){
-    const p = cur();
-    const it = ITEMS[kind];
-    p.items.splice(p.items.indexOf(kind), 1);
-    G.itemUsed = true;
+  /* ---------- Zwischenruf: die Wette gegen den Wuerfelnden ---------- */
+  // Der Kern des Extreme Mode. Wer weiterwürfelt, bietet den anderen eine
+  // Wette an – und die Quote hängt daran, wie dünn das Eis ist.
 
-    let text, tone = it.tone, icon = it.icon, title = it.name, fx = it.fx;
-    let then = it.then || null;
+  // Fehlwurf-Wahrscheinlichkeit nach Würfelzahl: 5 Würfel 7,7 % · 4 15,7 %
+  // · 3 27,8 % · 2 44,4 % · 1 66,7 %. Die Quoten liegen knapp darunter,
+  // damit die Bank einen Hauch Vorteil behält – der Reiz bleibt trotzdem:
+  // gegen fünf Würfel zu tippen ist ein Lotterielos mit ×10.
+  const QUOTE = {1:0.5, 2:1.5, 3:2.5, 4:5, 5:10};
+  const EINSAETZE = [100, 300, 600];
+  const quoteTxt = q => ("×" + q).replace(".", ",");
 
-    // Spiegel geht vor Schild: abprallen ist unterhaltsamer als verpuffen.
-    if(t && t.mirror){
-      t.mirror = false;
-      tone = "bad"; icon = "🪞"; title = "Spiegel!"; fx = "🪞"; then = null;
-      log("⚡ " + it.name + " von " + p.name + " prallt an " + t.name + "s Spiegel ab.", "hot");
-      text = "<b>" + esc(t.name) + "</b> hält den Spiegel hoch – " + it.icon + " " + it.name +
-             " kommt zurück.<br><br>" + it.apply(t, p);
-    } else if(t && t.shield){
-      t.shield = false;
-      tone = "bad"; icon = "🛡"; title = "Abgewehrt!"; fx = "🛡"; then = null;
-      log("⚡ " + it.name + " von " + p.name + " prallt an " + t.name + "s Schild ab.", "");
-      text = "<b>" + esc(t.name) + "</b> hatte ein Schild –<br>das Item verpufft wirkungslos.";
-    } else {
-      text = it.apply(p, t);
-      if(t) text += quip("steal");
-    }
-
-    announce({
-      tone: tone,
-      icon: icon,
-      fx: fx,
-      fxCount: it.fxCount,
-      eyebrow: esc(p.name) + " spielt",
-      title: title,
-      text: text,
-      buttons: [{label:"Weiter", fn: () => {
-        const w = winnerIfAny();        // Klau, Tausch und Karussell bringen Leute ins Ziel
-        if(w) winAnnounce(w);
-        else if(then) then();
-        else backToTable();
-      }}]
-    });
-  }
-
-  /* ---------- Zwischenruf ---------- */
-  // Das eigentliche Problem beim Reihum-Reichen: von drei Leuten ist immer nur
-  // einer beschäftigt. Hier dürfen die anderen gegen ihn tippen – dann schauen
-  // alle auf denselben Wurf, und das Gejohle entsteht am Tisch statt im Log.
   function maybeHeckle(next){
     if(!G.extreme || G.heckled || G.players.length < 2) return next();
-    if(G.diceCount > HECKLE_MAX_DICE || G.turnPoints < HECKLE_MIN_POT) return next();
+    if(G.turnPoints < HECKLE_MIN_POT) return next();
     G.heckled = true;
     askHeckle(next);
   }
 
+  // Nur setzen, was gedeckt ist: sonst waere eine Wette bei 0 Punkten gratis
+  // (die Zahlung ist auf den Kontostand gedeckelt) und damit reines Freispiel.
+  const erlaubt = (p, betrag) => betrag <= p.score;
+
   function askHeckle(next){
     const p = cur();
     const others = G.players.filter(x => x !== p);
-    const bets = [];
+    const quote = QUOTE[G.diceCount] || 1;
     const risk = G.turnPoints;
+    const einsatz = new Map();      // Spieler -> Einsatz (0 = tippt nicht)
     let done = false;
 
     announce({
       icon: "📣",
-      eyebrow: "Zwischenruf",
+      eyebrow: "Wettet dagegen",
       compact: true,
       title: p.name + " will weiter",
-      text: num(risk) + " Punkte auf dem Tisch, nur noch <b>" +
-            G.diceCount + (G.diceCount === 1 ? " Würfel</b>." : " Würfel</b>.") +
-            "<br><b>Wer glaubt nicht dran?</b>" +
-            '<span class="quip">Richtig getippt: ihr kassiert. Daneben: je ' +
-            HECKLE_PENALTY + " an ihn.</span>" +
+      text: num(risk) + " im Pot, noch <b>" + G.diceCount +
+            (G.diceCount === 1 ? " Würfel" : " Würfel") + "</b> – Quote <b>" +
+            quoteTxt(quote) + "</b>." +
+            '<span class="quip">Verwürfelt er, bekommt ihr euren Einsatz ' +
+            quoteTxt(quote) + " zurück. Schafft er es, geht er an ihn.</span>" +
             '<span class="hcount" id="hcount"></span>',
       buttons: []
     });
 
     others.forEach(o => {
       const b = document.createElement("button");
+      einsatz.set(o, 0);
+      const pleite = o.score < EINSAETZE[0];
       const paint = () => {
-        const on = bets.indexOf(o) !== -1;
-        b.className = on ? "warn" : "ghost";
-        b.textContent = on ? "✓ " + o.name + ": der verwürfelt!" : o.name + " tippt dagegen";
+        const e = einsatz.get(o);
+        b.className = e ? "warn" : "ghost";
+        b.disabled = pleite;
+        b.textContent = pleite
+          ? o.name + " ist pleite"
+          : e ? "✓ " + o.name + ": " + e + " auf Fehlwurf (+" + Math.round(e * quote) + ")"
+              : o.name + " tippt dagegen";
       };
+      // Jeder Tipp erhöht den Einsatz eine Stufe weiter und fällt dann auf null
+      // zurück – ein Knopf genügt, niemand muss ein Menü bedienen.
       onTap(b, () => {
         if(done) return;
-        const i = bets.indexOf(o);
-        if(i === -1) bets.push(o); else bets.splice(i, 1);
+        const moeglich = EINSAETZE.filter(x => erlaubt(o, x));
+        const i = moeglich.indexOf(einsatz.get(o));
+        einsatz.set(o, i + 1 >= moeglich.length ? 0 : moeglich[i + 1]);
         paint();
       });
       paint();
@@ -1459,8 +1107,6 @@
     onTap(go, () => finish());
     el.oBtns.appendChild(go);
 
-    // Die Uhr läuft, damit niemand ewig überlegt – abbrechen kann man jederzeit
-    // über "Würfeln!". Läuft sie ab, gilt was gerade angetippt ist.
     let left = HECKLE_SECONDS;
     const tick = () => {
       const c = document.getElementById("hcount");
@@ -1475,42 +1121,78 @@
       if(done) return;
       done = true;
       clearInterval(iv);
-      G.bets = bets.slice();
-      if(bets.length){
-        log("📣 Zwischenruf gegen " + p.name + ": " + bets.map(x => x.name).join(", "), "hot");
-        burst(["📣"], 6);
-      }
-      el.overlay.hidden = true;
-      next();
+      const gesetzt = others.filter(o => einsatz.get(o) > 0)
+                            .map(o => ({p:o, einsatz:einsatz.get(o)}));
+      if(!gesetzt.length){ G.bets = []; el.overlay.hidden = true; next(); return; }
+      log("📣 Gegen " + p.name + ": " +
+          gesetzt.map(b => b.p.name + " " + b.einsatz).join(", ") +
+          " (Quote " + quoteTxt(quote) + ")", "hot");
+      askRaise(gesetzt, quote, next);
     }
   }
 
+  // Der Moment, der aus einer Wette ein Spiel macht: er darf zurückbieten.
+  function askRaise(gesetzt, quote, next){
+    const p = cur();
+    const summe = gesetzt.reduce((s, b) => s + b.einsatz, 0);
+
+    const los = (faktor) => {
+      G.bets = gesetzt.map(b => ({p:b.p, einsatz:b.einsatz * faktor, quote:quote}));
+      if(faktor > 1) log("📣 " + p.name + " erhöht – alle Einsätze doppelt.", "hot");
+      burst(["📣"], 6);
+      next();
+    };
+
+    announce({
+      icon: "🎲",
+      eyebrow: "Sie trauen dir nicht",
+      tone: "bad",
+      title: summe + " gegen dich",
+      text: gesetzt.map(b => esc(b.p.name) + " " + num(b.einsatz)).join(" · ") +
+            "<br>Schaffst du den Wurf, gehört dir alles davon." +
+            '<span class="quip">Erhöhen verdoppelt beide Seiten: ' +
+            num(summe * 2) + " für dich – oder " + num(Math.round(summe * 2 * quote)) +
+            " für sie.</span>",
+      buttons: [
+        {label:"Erhöhen – doppelt oder nichts", cls:"warn", fn: () => los(2)},
+        {label:"Annehmen (" + summe + ")", cls:"ghost", fn: () => los(1)}
+      ]
+    });
+  }
+
   // Liefert fertiges HTML für die Ansage – oder "", wenn niemand getippt hat.
-  function resolveHeckle(busted, pot){
+  function resolveHeckle(busted){
     const bets = G.bets || [];
     G.bets = [];
     if(!bets.length) return "";
     const p = cur();
 
     if(busted){
-      const win = Math.max(50, Math.min(HECKLE_CAP, Math.floor(pot * HECKLE_SHARE / 50) * 50));
-      bets.forEach(b => { b.score += win; });
-      log("📣 Zwischenruf sitzt: " + bets.map(b => b.name).join(", ") + " je +" + win + ".", "good");
-      return "<br><b>Der Spott sitzt:</b> " +
-             bets.map(b => esc(b.name) + " " + num("+" + win)).join(" · ");
+      const zeilen = bets.map(b => {
+        const gewinn = Math.round(b.einsatz * b.quote / 50) * 50;
+        b.p.score += gewinn;
+        return esc(b.p.name) + " " + num("+" + gewinn);
+      });
+      log("📣 Wette gewonnen: " + bets.map(b => b.p.name).join(", "), "good");
+      return "<br><b>Die Wette sitzt:</b> " + zeilen.join(" · ");
     }
 
+    // Er hat geliefert. Eine Serie macht die Zecher zusätzlich arm.
+    p.serie = (p.serie || 0) + 1;
+    const heiss = p.serie >= HECKLE_SERIE;
     const zeilen = [];
+    let kasse = 0;
     bets.forEach(b => {
-      const zahlt = Math.min(HECKLE_PENALTY, b.score);
-      b.score -= zahlt;
-      p.score += zahlt;
-      zeilen.push(esc(b.name) + " " + num("−" + zahlt));
+      const zahlt = Math.min(b.einsatz * (heiss ? 2 : 1), b.p.score);
+      b.p.score -= zahlt;
+      kasse += zahlt;
+      zeilen.push(esc(b.p.name) + " " + num("−" + zahlt));
     });
-    log("📣 Zwischenruf daneben: " + bets.map(b => b.name).join(", ") +
-        " zahlen an " + p.name + ".", "bad");
-    return "<b>Danebengetippt!</b> " + zeilen.join(" · ") +
-           "<br>Kassiert hat <b>" + esc(p.name) + "</b> (" + num(p.score) + ").";
+    p.score += kasse;
+    log("📣 Wette verloren: " + bets.map(b => b.p.name).join(", ") +
+        " zahlen " + kasse + " an " + p.name + (heiss ? " (heißer Lauf, doppelt)" : ""), "bad");
+    return (heiss ? "<b>Heißer Lauf – doppelte Kasse!</b><br>" : "") +
+           zeilen.join(" · ") + "<br>Alles an <b>" + esc(p.name) + "</b> (" + num(p.score) + ").";
   }
 
   /* ---------- Spielende ---------- */
@@ -1549,25 +1231,17 @@
     G.pot = {points:banked, dice:remaining, from:p.name};
     G.current = (G.current + 1) % G.players.length;
 
-    const gesperrt = cur().blocked;
-    cur().blocked = false;
-
     announce({
       tone: "good",
       eyebrow: esc(p.name) + " sichert " + banked,
       title: cur().name + " ist dran",
-      text: (gesperrt
-        ? "Der Pot läge bei " + num(banked) + " Punkten mit <b>" + remaining +
-          " Würfeln</b> – aber du bist <b>blockiert</b> und musst bei Stufe 1 neu beginnen."
-        : "Der Pot liegt bei " + num(banked) + " Punkten, es sind noch <b>" +
-          remaining + " Würfel</b> im Spiel. Übernimmst du oder fängst du neu an?") +
-        quip(banked >= 1000 ? "fat" : "bank"),
-      buttons: gesperrt
-        ? [{label:"Neu beginnen mit 5 Würfeln", fn: declinePotAndRoll}]
-        : [
-            {label:"Pot übernehmen (" + banked + ")", cls:"warn", fn: takePotAndRoll},
-            {label:"Neu beginnen mit 5 Würfeln", cls:"ghost", fn: declinePotAndRoll}
-          ]
+      text: "Der Pot liegt bei " + num(banked) + " Punkten, es sind noch <b>" +
+            remaining + " Würfel</b> im Spiel. Übernimmst du oder fängst du neu an?" +
+            quip(banked >= 1000 ? "fat" : "bank"),
+      buttons: [
+        {label:"Pot übernehmen (" + banked + ")", cls:"warn", fn: takePotAndRoll},
+        {label:"Neu beginnen mit 5 Würfeln", cls:"ghost", fn: declinePotAndRoll}
+      ]
     });
   }
 
@@ -1580,11 +1254,10 @@
     G.players.forEach((p,i) => {
       const c = document.createElement("div");
       c.className = "chip" + (i === G.current ? " on" : "");
-      const marken = G.extreme
-        ? (p.mirror ? "🪞" : "") + (p.shield ? "🛡" : "") + (p.chute ? "🪂" : "") +
-          (p.items.length ? "⚡" + p.items.length : "")
+      // Eine laufende Serie sieht jeder – wer heiß ist, wird ungern beboten.
+      const besitz = G.extreme && p.serie
+        ? '<span class="inv">' + (p.serie >= HECKLE_SERIE ? "🔥" : "") + p.serie + "</span>"
         : "";
-      const besitz = marken ? '<span class="inv">' + marken + "</span>" : "";
       c.innerHTML = '<div class="n">' + esc(p.name) + besitz + '</div><div class="p">' + p.score + '</div>';
       el.scores.appendChild(c);
     });
@@ -1635,28 +1308,6 @@
           render();
         });
         el.combos.appendChild(b);
-      });
-    }
-
-    // Items auf der Hand des aktiven Spielers
-    el.hand.innerHTML = "";
-    if(G.extreme && picking){
-      [[cur().mirror, "🪞", "Spiegel steht"],
-       [cur().shield, "🛡", "Schild aktiv"],
-       [cur().chute,  "🪂", "Fallschirm um"]].forEach(g => {
-        if(!g[0]) return;
-        const s = document.createElement("span");
-        s.className = "item guard";
-        s.innerHTML = '<span class="ic">' + g[1] + "</span>" + g[2];
-        el.hand.appendChild(s);
-      });
-      cur().items.forEach(k => {
-        const it = ITEMS[k];
-        const btn = document.createElement("button");
-        btn.className = "item" + (G.itemUsed ? " spent" : "");
-        btn.innerHTML = '<span class="ic">' + it.icon + "</span>" + it.name;
-        onTap(btn, () => tapItem(k));
-        el.hand.appendChild(btn);
       });
     }
 
